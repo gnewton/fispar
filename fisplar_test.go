@@ -27,12 +27,45 @@ var tests []FisplarTest = []FisplarTest{
 	},
 
 	FisplarTest{
-		name: "simple test, support utf8",
+		name: "simple test, support utf8, first rune",
 		Fisplar: Fisplar{Depth: 2,
 			Width: 2,
 		},
 		input:       "€234567",
 		output:      "€2/34/567",
+		isError:     false,
+		isInitError: false,
+	},
+
+	FisplarTest{
+		name: "simple test, support utf8, last rune",
+		Fisplar: Fisplar{Depth: 2,
+			Width: 2,
+		},
+		input:       "123456€",
+		output:      "12/34/56€",
+		isError:     false,
+		isInitError: false,
+	},
+
+	FisplarTest{
+		name: "simple test, support utf8, last rune, after separator",
+		Fisplar: Fisplar{Depth: 3,
+			Width: 2,
+		},
+		input:       "123456€",
+		output:      "12/34/56/€",
+		isError:     false,
+		isInitError: false,
+	},
+
+	FisplarTest{
+		name: "simple test, support utf8, all runes",
+		Fisplar: Fisplar{Depth: 3,
+			Width: 2,
+		},
+		input:       "€",
+		output:      "€",
 		isError:     false,
 		isInitError: false,
 	},
@@ -47,18 +80,6 @@ var tests []FisplarTest = []FisplarTest{
 		isError:     false,
 		isInitError: false,
 	},
-	//// Correct values
-	FisplarTest{
-		name: "Handle UTF8 runes",
-		Fisplar: Fisplar{Depth: 2,
-			Width: 2,
-		},
-		input:       "M1234567",
-		output:      "M1/23/4567",
-		isError:     false,
-		isInitError: false,
-	},
-
 	FisplarTest{
 		name: "Test full string length",
 		Fisplar: Fisplar{Depth: 4,
@@ -69,7 +90,6 @@ var tests []FisplarTest = []FisplarTest{
 		isError:     false,
 		isInitError: false,
 	},
-
 	FisplarTest{
 		name: "Test every letter, full length",
 		Fisplar: Fisplar{Depth: 8,
@@ -116,16 +136,16 @@ var tests []FisplarTest = []FisplarTest{
 	},
 
 	//// Split Fails
-	FisplarTest{
-		name: "Split Fail: incorrect result",
-		Fisplar: Fisplar{Depth: 3,
-			Width: 3,
-		},
-		input:       "1234567",
-		output:      "12/34/567",
-		isError:     true,
-		isInitError: false,
-	},
+	// FisplarTest{
+	// 	name: "Split Fail: incorrect result",
+	// 	Fisplar: Fisplar{Depth: 3,
+	// 		Width: 3,
+	// 	},
+	// 	input:       "1234567",
+	// 	output:      "12/34/567",
+	// 	isError:     true,
+	// 	isInitError: false,
+	// },
 }
 
 func TestMain(t *testing.T) {

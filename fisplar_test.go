@@ -28,7 +28,8 @@ var tests []FisplarTest = []FisplarTest{
 
 	FisplarTest{
 		name: "simple test, support utf8, first rune",
-		Fisplar: Fisplar{Depth: 2,
+		Fisplar: Fisplar{
+			Depth: 2,
 			Width: 2,
 		},
 		input:       "€234567",
@@ -39,7 +40,8 @@ var tests []FisplarTest = []FisplarTest{
 
 	FisplarTest{
 		name: "simple test, support utf8, last rune",
-		Fisplar: Fisplar{Depth: 2,
+		Fisplar: Fisplar{
+			Depth: 2,
 			Width: 2,
 		},
 		input:       "123456€",
@@ -50,7 +52,8 @@ var tests []FisplarTest = []FisplarTest{
 
 	FisplarTest{
 		name: "simple test, support utf8, last rune, after separator",
-		Fisplar: Fisplar{Depth: 3,
+		Fisplar: Fisplar{
+			Depth: 3,
 			Width: 2,
 		},
 		input:       "123456€",
@@ -60,13 +63,26 @@ var tests []FisplarTest = []FisplarTest{
 	},
 
 	FisplarTest{
-		name: "simple test, support utf8, all runes",
+		name: "Support utf8, single rune",
 		Fisplar: Fisplar{Depth: 3,
 			Width: 2,
 		},
 		input:       "€",
 		output:      "€",
 		isError:     false,
+		isInitError: false,
+	},
+
+	FisplarTest{
+		name: "Support utf8, single rune, too short string true",
+		Fisplar: Fisplar{
+			Depth:                  3,
+			Width:                  2,
+			ErrorOnTooShortStrings: true,
+		},
+		input:       "€",
+		output:      "€",
+		isError:     true,
 		isInitError: false,
 	},
 
@@ -113,7 +129,7 @@ var tests []FisplarTest = []FisplarTest{
 	},
 
 	FisplarTest{
-		name: "Test every letter, full length minus 1",
+		name: "Test last letter, full length minus 1",
 		Fisplar: Fisplar{Depth: 1,
 			Width: 7,
 		},
@@ -125,8 +141,19 @@ var tests []FisplarTest = []FisplarTest{
 
 	//// Init Fails
 	FisplarTest{
-		name: "Init Fail: depth, width are zero",
+		name: "Init Fail: depth is zero",
 		Fisplar: Fisplar{Depth: 0,
+			Width: 2,
+		},
+		input:       "1234567",
+		output:      "12/34/567",
+		isError:     false,
+		isInitError: true,
+	},
+
+	FisplarTest{
+		name: "Init Fail: width is zero",
+		Fisplar: Fisplar{Depth: 2,
 			Width: 0,
 		},
 		input:       "1234567",
@@ -135,17 +162,28 @@ var tests []FisplarTest = []FisplarTest{
 		isInitError: true,
 	},
 
-	//// Split Fails
-	// FisplarTest{
-	// 	name: "Split Fail: incorrect result",
-	// 	Fisplar: Fisplar{Depth: 3,
-	// 		Width: 3,
-	// 	},
-	// 	input:       "1234567",
-	// 	output:      "12/34/567",
-	// 	isError:     true,
-	// 	isInitError: false,
-	// },
+	//Split Fails
+	FisplarTest{
+		name: "Split Fail: incorrect result",
+		Fisplar: Fisplar{Depth: 3,
+			Width: 3,
+		},
+		input:       "1234567",
+		output:      "12/34/567",
+		isError:     true,
+		isInitError: false,
+	},
+
+	FisplarTest{
+		name: "Split Fail: string too short",
+		Fisplar: Fisplar{Depth: 3,
+			Width: 3,
+		},
+		input:       "1",
+		output:      "1",
+		isError:     true,
+		isInitError: false,
+	},
 }
 
 func TestMain(t *testing.T) {
@@ -154,8 +192,11 @@ func TestMain(t *testing.T) {
 		t.Run(ft.name, func(t *testing.T) {
 			// init
 			err := ft.Fisplar.Init()
-			if (err != nil && !ft.isInitError) || (err == nil && ft.isInitError) {
-				t.Fatal(err, ft.Width, ft.Depth, ft.input, ft.output, ft.isError, ft.isInitError)
+			if err != nil && !ft.isInitError {
+				t.Fatal("Init() error: Expecting no error, go error. ", err, ft.Width, ft.Depth, ft.input, ft.output, ft.isError, ft.isInitError)
+			}
+			if err == nil && ft.isInitError {
+				t.Fatal("Init() error: Expecting error, got no error", err, ft.Width, ft.Depth, ft.input, ft.output, ft.isError, ft.isInitError)
 			}
 			// Expected Init error
 			if err != nil && ft.isInitError {
@@ -170,17 +211,20 @@ func TestMain(t *testing.T) {
 				return
 			}
 			// Not expected Split error
-			if err != nil && !ft.isError {
+			if err != nil {
+				if ft.isError {
+					t.Fatal("Split: Not expected error, got error.", err, ft.Width, ft.Depth, v, ft.input, ft.output, ft.isError, ft.isInitError)
+				} else {
+					if v != ft.output {
+						t.Fatal("Not expected error, got error [input != output].", ft.Width, ft.Depth, v, ft.input, ft.output, ft.isError, ft.isInitError)
+					}
 
-				t.Fatal(err, ft.Width, ft.Depth, v, ft.input, ft.output, ft.isError, ft.isInitError)
+					// Not expected Split correct result
+					if err == nil && ft.isError {
+						t.Fatal("Split: Expected error, got NO error.", err, ft.Width, ft.Depth, v, ft.input, ft.output, ft.isError, ft.isInitError)
+					}
+				}
 			}
-
-			// Not expected value error
-			if v != ft.output {
-				t.Fatal("input != output", ft.Width, ft.Depth, v, ft.input, ft.output, ft.isError, ft.isInitError)
-			}
-
 		})
-
 	}
 }

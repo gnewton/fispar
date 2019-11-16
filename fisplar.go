@@ -1,26 +1,21 @@
 package fisplar
 
 import (
-	"encoding/hex"
 	"errors"
-	"hash"
 	"os"
 	"strconv"
-	//"strings"
-	"sync"
+	"unicode/utf8"
 )
 
 const DefaultSeparator = string(os.PathSeparator)
 
 type Fisplar struct {
-	Depth               int
-	Width               int
-	length              int
-	Separator           *string
-	Hash                func() hash.Hash
-	pool                *sync.Pool
-	inited              bool
-	errorOnShortStrings bool
+	Depth                  int
+	Width                  int
+	length                 int
+	Separator              *string
+	inited                 bool
+	ErrorOnTooShortStrings bool
 }
 
 func (f *Fisplar) Init() error {
@@ -40,29 +35,36 @@ func (f *Fisplar) Init() error {
 		*(f.Separator) = DefaultSeparator
 	}
 
-	if f.Hash != nil {
-		f.initPool()
-	}
 	f.inited = true
 
 	return nil
 }
 
-func (f *Fisplar) Split(s string) (string, error) {
+func (f *Fisplar) Split(str string) (string, error) {
 	if !f.inited {
 		return "", errors.New("fisplar not inited")
 	}
 
-	if len(s) == 0 {
+	if len(str) == 0 {
 		return "", errors.New("String is empty")
 	}
-	if f.Hash != nil {
-		s = f.hashString(s)
+
+	if utf8.RuneCountInString(str) > 0 {
+		return splitRunes(f, str)
 	}
 
+	return splitString(f, str)
+}
+
+func splitString(f *Fisplar, s string) (string, error) {
+	return splitRunes(f, s)
+}
+
+func splitRunes(f *Fisplar, s string) (string, error) {
+
 	r := []rune(s)
-	if f.errorOnShortStrings && f.length > len(r) {
-		return "", errors.New("String too short [" + s + "] len=" + strconv.Itoa(len(s)) + " depth=" + strconv.Itoa(f.Depth) + " width=" + strconv.Itoa(f.Width))
+	if f.ErrorOnTooShortStrings && f.length > len(r) {
+		return "", errors.New("String too short [" + s + "] len=" + strconv.Itoa(len(r)) + " depth=" + strconv.Itoa(f.Depth) + " width=" + strconv.Itoa(f.Width))
 	}
 
 	//var ns []string
@@ -86,32 +88,4 @@ func (f *Fisplar) Split(s string) (string, error) {
 
 	//return strings.Join(ns, *f.Separator), nil
 	return z, nil
-}
-
-func (f *Fisplar) hashString(s string) string {
-	var h hash.Hash
-	h = f.pool.Get().(hash.Hash)
-	h.Reset()
-
-	h.Write([]byte(s))
-	hexString := hex.EncodeToString(h.Sum(nil))
-
-	f.pool.Put(h)
-
-	return hexString
-}
-
-func (f *Fisplar) initPool() {
-	f.pool = &(sync.Pool{
-		// New creates an object when the pool has nothing available to return.
-		// New must return an interface{} to make it flexible. You have to cast
-		// your type after getting it.
-		New: func() interface{} {
-			// Pools often contain things like *bytes.Buffer, which are
-			// temporary and re-usable.
-			//hash := sha512.New
-			return f.Hash()
-		},
-	})
-
 }

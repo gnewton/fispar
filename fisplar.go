@@ -2,6 +2,7 @@ package fisplar
 
 import (
 	"errors"
+	"log"
 	"os"
 	"strconv"
 	"unicode/utf8"
@@ -10,12 +11,12 @@ import (
 const DefaultSeparator = string(os.PathSeparator)
 
 type Fisplar struct {
+	Separator              *string
 	Depth                  int
 	Width                  int
-	length                 int
-	Separator              *string
-	inited                 bool
 	ErrorOnTooShortStrings bool
+	length                 int
+	inited                 bool
 }
 
 func (f *Fisplar) Init() error {
@@ -49,15 +50,48 @@ func (f *Fisplar) Split(str string) (string, error) {
 		return "", errors.New("String is empty")
 	}
 
-	if utf8.RuneCountInString(str) > 0 {
+	if utf8.RuneCountInString(str) != len(str) {
+		log.Println("==========")
 		return splitRunes(f, str)
 	}
 
 	return splitString(f, str)
 }
 
+// TODO
+// non-runes (i.e. string) implementation faster and less allocs.
+//
 func splitString(f *Fisplar, s string) (string, error) {
-	return splitRunes(f, s)
+	if f.length > len(s) {
+		if !f.ErrorOnTooShortStrings {
+			return s, nil
+		} else {
+			return "", errors.New("String too short [" + s + "] len=" + strconv.Itoa(len(s)) + " depth=" + strconv.Itoa(f.Depth) + " width=" + strconv.Itoa(f.Width))
+		}
+	}
+
+	var out string
+
+	depthCount := 0
+	var i int
+	for i = 0; i < f.length; i += f.Width {
+		//log.Println(s, i, f.Width, out)
+		out = out + s[i:i+f.Width]
+
+		if depthCount == f.Depth {
+			break
+		}
+		out = out + *f.Separator
+		depthCount++
+
+	}
+
+	if len(s) > f.length {
+		out = out + s[f.length:]
+	}
+
+	//return splitRunes(f, s)
+	return out, nil
 }
 
 func splitRunes(f *Fisplar, s string) (string, error) {

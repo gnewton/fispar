@@ -2,7 +2,6 @@ package fisplar
 
 import (
 	"errors"
-	"log"
 	"os"
 	"strconv"
 	"unicode/utf8"
@@ -50,48 +49,58 @@ func (f *Fisplar) Split(str string) (string, error) {
 		return "", errors.New("String is empty")
 	}
 
+	//Contains utf8 runes?
 	if utf8.RuneCountInString(str) != len(str) {
-		log.Println("==========")
 		return splitRunes(f, str)
 	}
 
 	return splitString(f, str)
 }
 
-// TODO
-// non-runes (i.e. string) implementation faster and less allocs.
-//
 func splitString(f *Fisplar, s string) (string, error) {
 	if f.length > len(s) {
-		if !f.ErrorOnTooShortStrings {
-			return s, nil
-		} else {
+		if f.ErrorOnTooShortStrings {
 			return "", errors.New("String too short [" + s + "] len=" + strconv.Itoa(len(s)) + " depth=" + strconv.Itoa(f.Depth) + " width=" + strconv.Itoa(f.Width))
 		}
 	}
 
-	var out string
+	var newString string
+
+	var i int
+	for i = 0; i < len(s); i++ {
+		newString = newString + string(s[i])
+		if (i+1)%f.Width == 0 && i < f.length {
+			newString = newString + *f.Separator
+		}
+	}
+	return newString, nil
+}
+
+func splitString_orig(f *Fisplar, s string) (string, error) {
+	if f.length > len(s) {
+		return "", errors.New("String too short [" + s + "] len=" + strconv.Itoa(len(s)) + " depth=" + strconv.Itoa(f.Depth) + " width=" + strconv.Itoa(f.Width))
+
+	}
+
+	var newString string
 
 	depthCount := 0
 	var i int
 	for i = 0; i < f.length; i += f.Width {
-		//log.Println(s, i, f.Width, out)
-		out = out + s[i:i+f.Width]
+		newString = newString + s[i:i+f.Width]
 
 		if depthCount == f.Depth {
 			break
 		}
-		out = out + *f.Separator
+		newString = newString + *f.Separator
 		depthCount++
 
 	}
 
 	if len(s) > f.length {
-		out = out + s[f.length:]
+		newString = newString + s[f.length:]
 	}
-
-	//return splitRunes(f, s)
-	return out, nil
+	return newString, nil
 }
 
 func splitRunes(f *Fisplar, s string) (string, error) {
@@ -101,18 +110,42 @@ func splitRunes(f *Fisplar, s string) (string, error) {
 		return "", errors.New("String too short [" + s + "] len=" + strconv.Itoa(len(r)) + " depth=" + strconv.Itoa(f.Depth) + " width=" + strconv.Itoa(f.Width))
 	}
 
-	//var ns []string
+	var newString string
 
-	var z string
-	n := 0
 	for i := 0; i < len(r); i++ {
 		{
-			if n == f.Width && i <= f.length {
-				n = 0
-				z = z + *f.Separator
+			newString = newString + string(r[i])
+			if (i+1)%f.Width == 0 && i < f.length {
+				newString = newString + *f.Separator
 			}
-			z = z + string(r[i])
-			n++
+		}
+	}
+
+	// if len(r) > f.length {
+	// 	newString = newString + string(r[f.length:])
+	// }
+
+	//return strings.Join(ns, *f.Separator), nil
+	return newString, nil
+}
+
+func splitRunes_orig(f *Fisplar, s string) (string, error) {
+
+	r := []rune(s)
+	if f.ErrorOnTooShortStrings && f.length > len(r) {
+		return "", errors.New("String too short [" + s + "] len=" + strconv.Itoa(len(r)) + " depth=" + strconv.Itoa(f.Depth) + " width=" + strconv.Itoa(f.Width))
+	}
+
+	var newString string
+	widthCounter := 0
+	for i := 0; i < len(r); i++ {
+		{
+			if widthCounter == f.Width && i <= f.length {
+				widthCounter = 0
+				newString = newString + *f.Separator
+			}
+			newString = newString + string(r[i])
+			widthCounter++
 		}
 	}
 
@@ -121,5 +154,8 @@ func splitRunes(f *Fisplar, s string) (string, error) {
 	//}
 
 	//return strings.Join(ns, *f.Separator), nil
-	return z, nil
+	return newString, nil
+}
+
+type Mover struct {
 }

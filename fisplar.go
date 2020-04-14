@@ -15,6 +15,7 @@ type Fisplar struct {
 	Width                  int
 	ErrorOnTooShortStrings bool
 	length                 int
+	runeLength             int
 	inited                 bool
 }
 
@@ -28,6 +29,7 @@ func (f *Fisplar) Init() error {
 	if f.Width < 1 {
 		return errors.New("Width must be > 0")
 	}
+
 	f.length = f.Width * f.Depth
 
 	if f.Separator == nil {
@@ -58,6 +60,7 @@ func (f *Fisplar) Split(str string) (string, error) {
 }
 
 func splitString(f *Fisplar, s string) (string, error) {
+
 	if f.length > len(s) {
 		if f.ErrorOnTooShortStrings {
 			return "", errors.New("String too short [" + s + "] len=" + strconv.Itoa(len(s)) + " depth=" + strconv.Itoa(f.Depth) + " width=" + strconv.Itoa(f.Width))

@@ -429,32 +429,32 @@ var Tests []FisplarTest = []FisplarTest{
 		expectInitError:  true,
 	},
 
-	// FisplarTest{
-	// 	name: "Error: Init: Test depth*width, 9*8; ErrorOnTooShortStrings:false",
-	// 	Fisplar: Fisplar{
-	// 		Depth: 9,
-	// 		Width: 8,
-	// 		ErrorOnTooShortStrings: true,
-	// 	},
-	// 	input:  "12345678",
-	// 	output: "12345678",
+	FisplarTest{
+		name: "Error: Init: Test depth*width, 9*8; ErrorOnTooShortStrings:false",
+		Fisplar: Fisplar{
+			Depth:                  9,
+			Width:                  8,
+			ErrorOnTooShortStrings: true,
+		},
+		input:  "12345678",
+		output: "12345678",
 
-	// 	expectSplitError: false,
-	// 	expectInitError:  true,
-	// },
+		expectSplitError: true,
+		expectInitError:  false,
+	},
 
-	// FisplarTest{
-	// 	name: "Error: Init: Test depth*width, 8*9; ErrorOnTooShortStrings:false",
-	// 	Fisplar: Fisplar{
-	// 		Depth: 8,
-	// 		Width: 9,
-	// 		ErrorOnTooShortStrings: true,
-	// 	},
-	// 	input:            "12345678",
-	// 	output:           "12345678",
-	// 	expectSplitError: false,
-	// 	expectInitError:  true,
-	// },
+	FisplarTest{
+		name: "Error: Init: Test depth*width, 8*9; ErrorOnTooShortStrings:false",
+		Fisplar: Fisplar{
+			Depth:                  8,
+			Width:                  9,
+			ErrorOnTooShortStrings: true,
+		},
+		input:            "12345678",
+		output:           "12345678",
+		expectSplitError: true,
+		expectInitError:  false,
+	},
 
 	//Split Fails
 	FisplarTest{
